@@ -9,34 +9,390 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#f0f9ff">
+    <meta name="theme-color" content="#eff6ff">
     <title>田中君的崩溃日常</title>
 
     <!-- App Icon (Embedded SVG) -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>😐</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22 style=%22background-color: %23fef3c7;%22><rect width=%22100%22 height=%22100%22 fill=%22%23fef3c7%22/><text x=%2250%22 y=%2250%22 font-size=%2270%22 text-anchor=%22middle%22 dy=%22.35em%22>😐</text></svg>">
 
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=ZCOOL+KuaiLe&display=swap');
+        /* --- 原生 CSS 重置与变量定义 --- */
+        :root {
+            --primary: #6366f1; /* Indigo 500 */
+            --primary-dark: #4338ca; /* Indigo 700 */
+            --primary-light: #e0e7ff; /* Indigo 100 */
+            --secondary: #facc15; /* Yellow 400 */
+            --bg-start: #eff6ff; /* Blue 50 */
+            --bg-end: #e0e7ff; /* Indigo 100 */
+            --white: #ffffff;
+            --text-main: #1f2937;
+            --text-sub: #6b7280;
+            --danger: #ef4444;
+            --success: #22c55e;
+        }
 
-        body {
-            font-family: 'Noto Sans JP', sans-serif;
-            background-color: #f0f9ff;
-            /* 禁止页面滚动和橡皮筋效果，营造 App 质感 */
-            overscroll-behavior: none;
-            touch-action: manipulation;
-            /* 禁止长按选中文字 */
-            -webkit-user-select: none;
-            user-select: none;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
             -webkit-tap-highlight-color: transparent;
         }
 
-        .font-cute {
-            font-family: 'ZCOOL KuaiLe', cursive;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans JP", sans-serif;
+            background: linear-gradient(to bottom, var(--bg-start), var(--bg-end));
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            overscroll-behavior: none;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
-        /* 摇晃动画 */
+        /* 游戏主容器 */
+        .game-container {
+            width: 100%;
+            max-width: 28rem; /* max-w-md */
+            background-color: var(--white);
+            border-radius: 1.5rem; /* rounded-3xl */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 4px solid #c7d2fe; /* Indigo 200 */
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-height: 90%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 顶部 Header */
+        .header {
+            background-color: var(--primary);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--white);
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .score-box {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .score-text {
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .progress-track {
+            flex: 1;
+            margin: 0 1rem;
+            background-color: var(--primary-dark);
+            border-radius: 9999px;
+            height: 0.75rem;
+        }
+
+        .progress-bar {
+            background-color: var(--secondary);
+            height: 100%;
+            border-radius: 9999px;
+            width: 0%;
+            transition: width 0.5s ease-out;
+        }
+
+        .level-badge {
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+
+        /* 可滚动内容区 */
+        .content-area {
+            padding: 1.5rem;
+            position: relative;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        /* 隐藏滚动条 */
+        .content-area::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* 田中君头像 */
+        .avatar-section {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .avatar-wrapper {
+            position: relative;
+        }
+
+        .avatar-face {
+            width: 5rem;
+            height: 5rem;
+            background-color: #fef9c3; /* Yellow 100 */
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            border: 2px solid #fde68a; /* Yellow 200 */
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            transition: all 0.3s ease;
+        }
+
+        .avatar-status {
+            position: absolute;
+            top: -0.5rem;
+            right: -3rem;
+            background-color: var(--white);
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #f3f4f6;
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            white-space: nowrap;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .7; }
+        }
+
+        /* 问题场景框 */
+        .scenario-box {
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .scenario-label {
+            color: #9ca3af;
+            font-size: 0.75rem;
+            margin-bottom: 0.25rem;
+            letter-spacing: 0.1em;
+            font-family: "Arial", sans-serif;
+            font-weight: bold;
+        }
+
+        .scenario-content {
+            background-color: #f9fafb;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            border: 1px solid #f3f4f6;
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .scenario-text {
+            font-size: 1rem;
+            color: var(--text-main);
+            line-height: 1.625;
+            font-weight: 500;
+        }
+        
+        .highlight-blank {
+            border-bottom: 2px solid #818cf8;
+            color: #6366f1;
+            font-weight: bold;
+            padding: 0 0.25rem;
+            display: inline-block;
+        }
+
+        /* 选项按钮 */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.75rem;
+            padding-bottom: 1rem;
+        }
+
+        .option-btn {
+            width: 100%;
+            background-color: var(--white);
+            border: 2px solid var(--primary-light);
+            padding: 1rem;
+            border-radius: 1rem;
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--text-main);
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.15s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            -webkit-appearance: none; /* remove iOS default btn style */
+        }
+
+        .option-btn:active {
+            transform: scale(0.96);
+            background-color: var(--primary-light);
+        }
+
+        /* 模态框通用 */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background-color: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+
+        .modal-card {
+            background-color: var(--white);
+            width: 100%;
+            max-width: 24rem;
+            border-radius: 1.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            text-align: center;
+            border: 4px solid var(--white);
+            transform: scale(1);
+            transition: all 0.3s ease;
+        }
+        
+        /* 隐藏工具类 */
+        .hidden {
+            display: none !important;
+        }
+
+        /* 结果模态框内容 */
+        .modal-icon {
+            font-size: 3.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .modal-title.correct { color: var(--success); }
+        .modal-title.wrong { color: var(--danger); }
+
+        .word-detail-box {
+            background-color: var(--bg-start);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            text-align: left;
+            margin-bottom: 1rem;
+            box-shadow: inset 0 2px 4px 0 rgba(0,0,0,0.05);
+        }
+
+        .word-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.25rem;
+        }
+
+        .word-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-dark);
+        }
+
+        .reading-text {
+            font-size: 0.875rem;
+            color: var(--primary);
+            font-family: monospace;
+        }
+
+        .meaning-label {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            text-transform: uppercase;
+            border-top: 1px solid #c7d2fe;
+            padding-top: 0.25rem;
+            margin-top: 0.25rem;
+        }
+
+        .meaning-text {
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .funny-comment {
+            font-size: 0.875rem;
+            color: var(--text-sub);
+            font-style: italic;
+            margin-bottom: 1.5rem;
+        }
+
+        .action-btn {
+            width: 100%;
+            background-color: var(--primary);
+            color: var(--white);
+            font-weight: 700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 1rem;
+            border: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.1s;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .action-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Game Over 模态框 */
+        .game-over-bg {
+            background-color: var(--primary-dark);
+            color: var(--white);
+            flex-direction: column;
+        }
+
+        .score-large {
+            font-size: 3.75rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .retry-btn {
+            background-color: var(--secondary);
+            color: var(--primary-dark);
+            margin-top: 0.75rem;
+        }
+        
+        .share-btn {
+            background-color: var(--white);
+            color: var(--primary);
+        }
+
+        .hint-text {
+            margin-top: 1rem;
+            color: var(--primary);
+            font-size: 0.75rem;
+            text-align: center;
+            opacity: 0.7;
+        }
+
+        /* 动画 */
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
             25% { transform: translateX(-10px); }
@@ -46,7 +402,6 @@
             animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
         }
 
-        /* 弹跳动画 */
         @keyframes bounce-in {
             0% { transform: scale(0.8); opacity: 0; }
             50% { transform: scale(1.05); opacity: 1; }
@@ -55,123 +410,105 @@
         .pop-in {
             animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
-
-        .emoji-avatar {
-            transition: all 0.3s ease;
-        }
-
-        .progress-fill {
-            transition: width 0.5s ease-out;
-        }
-
-        .option-card:active {
-            transform: scale(0.96) !important;
-            background-color: #e0e7ff;
-        }
-        
-        ::-webkit-scrollbar {
-            width: 0px;
-            background: transparent;
-        }
     </style>
 </head>
-<body class="bg-gradient-to-b from-blue-50 to-indigo-100 h-screen w-screen overflow-hidden flex flex-col items-center justify-center p-4">
+<body>
 
     <!-- Game Container -->
-    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden relative border-4 border-indigo-200 flex flex-col h-full max-h-[90%]">
+    <div class="game-container">
         
         <!-- Header -->
-        <div class="bg-indigo-500 p-4 flex justify-between items-center text-white shrink-0 z-10">
-            <div class="flex items-center space-x-2">
-                <span class="text-2xl">🏆</span>
-                <span id="scoreDisplay" class="font-bold text-xl">0</span>
+        <div class="header">
+            <div class="score-box">
+                <span style="font-size: 1.5rem;">🏆</span>
+                <span id="scoreDisplay" class="score-text">0</span>
             </div>
-            <div class="flex-1 mx-4 bg-indigo-700 rounded-full h-3">
-                <div id="progressBar" class="bg-yellow-400 h-3 rounded-full progress-fill" style="width: 0%"></div>
+            <div class="progress-track">
+                <div id="progressBar" class="progress-bar"></div>
             </div>
-            <div class="font-bold text-sm">Lv.<span id="levelDisplay">N3</span></div>
+            <div class="level-badge">Lv.<span id="levelDisplay">N3</span></div>
         </div>
 
         <!-- Scrollable Content Area -->
-        <div class="p-6 relative flex-1 overflow-y-auto">
+        <div class="content-area">
             
             <!-- Tanaka Avatar -->
-            <div class="flex justify-center mb-4">
-                <div class="relative">
-                    <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center text-5xl shadow-inner border-2 border-yellow-200 emoji-avatar" id="tanakaFace">
+            <div class="avatar-section">
+                <div class="avatar-wrapper">
+                    <div class="avatar-face" id="tanakaFace">
                         😐
                     </div>
-                    <div class="absolute -top-2 -right-12 bg-white px-3 py-1 rounded-xl shadow-md border border-gray-100 text-xs text-gray-500 animate-pulse" id="statusText">
+                    <div class="avatar-status" id="statusText">
                         正在发呆...
                     </div>
                 </div>
             </div>
 
             <!-- Question Scenario -->
-            <div class="mb-4 text-center">
-                <p class="text-gray-400 text-xs mb-1 font-cute tracking-widest">SCENARIO / 场景</p>
-                <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 min-h-[90px] flex items-center justify-center">
-                    <p id="questionText" class="text-base text-gray-800 leading-relaxed font-medium">
+            <div class="scenario-box">
+                <p class="scenario-label">SCENARIO / 场景</p>
+                <div class="scenario-content">
+                    <p id="questionText" class="scenario-text">
                         加载中...
                     </p>
                 </div>
             </div>
 
             <!-- Options Grid -->
-            <div id="optionsGrid" class="grid grid-cols-1 gap-3 pb-4">
+            <div id="optionsGrid" class="options-grid">
                 <!-- Options injected here -->
             </div>
         </div>
     </div>
 
-    <!-- Share/Install Hint (Bottom) -->
-    <div class="mt-4 text-indigo-400 text-xs text-center opacity-70">
-        <p>💡 Tip: 如无法点击，请尝试复制代码到 CodePen.io 运行</p>
+    <!-- Share/Install Hint -->
+    <div class="hint-text">
+        <p>💡 Tip: 在浏览器菜单中选择“添加到主屏幕”体验更佳</p>
     </div>
 
     <!-- Feedback Modal -->
-    <div id="feedbackPanel" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/20 backdrop-blur-sm">
-        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl transform transition-all scale-100 flex flex-col items-center text-center border-4 border-white">
-            <div id="feedbackIcon" class="text-6xl mb-4">🎉</div>
-            <h2 id="feedbackTitle" class="text-2xl font-bold mb-2 text-indigo-600">正解！</h2>
+    <div id="feedbackPanel" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div id="feedbackIcon" class="modal-icon">🎉</div>
+            <h2 id="feedbackTitle" class="modal-title">正解！</h2>
             
-            <div class="bg-indigo-50 p-4 rounded-xl w-full mb-4 text-left shadow-inner">
-                <div class="flex justify-between items-baseline mb-1">
-                    <p id="resultWord" class="text-2xl font-bold text-indigo-700">単語</p>
-                    <p id="resultReading" class="text-sm text-indigo-400 font-mono">たんご</p>
+            <div class="word-detail-box">
+                <div class="word-header">
+                    <p id="resultWord" class="word-text">単語</p>
+                    <p id="resultReading" class="reading-text">たんご</p>
                 </div>
-                <p class="text-xs text-gray-400 uppercase border-t border-indigo-200 pt-1 mt-1">Meaning</p>
-                <p id="resultMeaning" class="text-gray-700 font-medium">含义</p>
+                <p class="meaning-label">Meaning</p>
+                <p id="resultMeaning" class="meaning-text">含义</p>
             </div>
 
-            <p id="funnyComment" class="text-sm text-gray-500 italic mb-6">"田中君觉得很赞。"</p>
+            <p id="funnyComment" class="funny-comment">"田中君觉得很赞。"</p>
 
-            <button onclick="nextQuestion()" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg active:scale-95 transition-transform cursor-pointer">
+            <button onclick="nextQuestion()" class="action-btn">
                 下一题 (Tsugi!)
             </button>
         </div>
     </div>
 
     <!-- Game Over Modal -->
-    <div id="gameOverPanel" class="hidden fixed inset-0 z-50 bg-indigo-900 flex flex-col items-center justify-center p-8 text-center text-white">
-        <div class="text-6xl mb-4 animate-bounce">🍱</div>
-        <h2 class="text-3xl font-bold mb-2 font-cute">下班啦！</h2>
-        <p class="mb-6 text-indigo-200">今天的日语修炼成果...</p>
-        <div class="text-6xl font-bold text-yellow-400 mb-2" id="finalScore">0</div>
-        <p class="text-lg text-indigo-300 mb-8 font-cute" id="finalRank">菜鸟社畜</p>
+    <div id="gameOverPanel" class="modal-overlay game-over-bg hidden">
+        <div style="font-size: 3.75rem; margin-bottom: 1rem; animation: bounce 1s infinite;">🍱</div>
+        <h2 style="font-size: 1.875rem; font-weight: 700; margin-bottom: 0.5rem;">下班啦！</h2>
+        <p style="color: #c7d2fe; margin-bottom: 1.5rem;">今天的日语修炼成果...</p>
+        <div id="finalScore" class="score-large">0</div>
+        <p id="finalRank" style="font-size: 1.125rem; color: #a5b4fc; margin-bottom: 2rem;">菜鸟社畜</p>
         
-        <div class="flex flex-col w-full max-w-xs gap-3">
-            <button onclick="shareScore()" id="shareBtn" class="bg-white text-indigo-600 font-bold py-3 px-8 rounded-full shadow-lg hover:bg-gray-100 transition w-full hidden cursor-pointer">
+        <div style="display: flex; flex-direction: column; width: 100%; max-width: 20rem; gap: 0.75rem;">
+            <button onclick="shareScore()" id="shareBtn" class="action-btn share-btn hidden">
                 炫耀一下 (Share)
             </button>
-            <button onclick="restartGame()" class="bg-yellow-400 text-indigo-900 font-bold py-3 px-8 rounded-full shadow-lg hover:bg-yellow-300 transition w-full cursor-pointer">
+            <button onclick="restartGame()" class="action-btn retry-btn">
                 再来一天 (Retry)
             </button>
         </div>
     </div>
 
     <!-- Confetti Canvas -->
-    <canvas id="confetti" class="fixed top-0 left-0 w-full h-full pointer-events-none z-50 hidden"></canvas>
+    <canvas id="confetti" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100;" class="hidden"></canvas>
 
     <script>
         // --- 游戏数据 (20个词汇) ---
@@ -180,7 +517,7 @@
                 word: "我慢", reading: "がまん (Gaman)", level: "N3",
                 meaning: "忍耐，忍受",
                 scenario: "电梯里只有我和老板两个人，突然感觉到一阵强烈的腹痛，但我必须______。",
-                fullSentence: "电梯里只有我和老板两个人，突然感觉到一阵强烈的腹痛，但我必须<strong>我慢</strong>。",
+                fullSentence: "电梯里只有我和老板两个人，突然感觉到一阵强烈的腹痛，但我必须<span class='highlight-blank'>我慢</span>。",
                 options: ["我慢", "自慢", "怠慢", "肥満"],
                 comment: "这就是社畜的究极奥义！屁如果不忍住，人生就结束了。",
                 emotion: "😖"
@@ -189,7 +526,7 @@
                 word: "矛盾", reading: "むじゅん (Mujun)", level: "N2",
                 meaning: "矛盾",
                 scenario: "一边说着“我要减肥”，一边往嘴里塞第三块蛋糕，这种行为充满了______。",
-                fullSentence: "一边说着“我要减肥”，一边往嘴里塞第三块蛋糕，这种行为充满了<strong>矛盾</strong>。",
+                fullSentence: "一边说着“我要减肥”，一边往嘴里塞第三块蛋糕，这种行为充满了<span class='highlight-blank'>矛盾</span>。",
                 options: ["矛盾", "切断", "油断", "決断"],
                 comment: "没错，甜食是装在另一个胃里的，这不算矛盾（确信）。",
                 emotion: "🍰"
@@ -198,7 +535,7 @@
                 word: "配慮", reading: "はいりょ (Hairyo)", level: "N2",
                 meaning: "关怀，照顾",
                 scenario: "看到秃头的课长走过来，田中君默默地把屏幕上的假发广告关掉，这是一种______。",
-                fullSentence: "看到秃头的课长走过来，田中君默默地把屏幕上的假发广告关掉，这是一种<strong>配慮</strong>。",
+                fullSentence: "看到秃头的课长走过来，田中君默默地把屏幕上的假发广告关掉，这是一种<span class='highlight-blank'>配慮</span>。",
                 options: ["配慮", "遠慮", "焦虑", "無礼"],
                 comment: "这是为了守护课长最后的尊严，真是温柔的世界啊。",
                 emotion: "🤫"
@@ -207,7 +544,7 @@
                 word: "躊躇", reading: "ちゅうちょ (Chuucho)", level: "N1",
                 meaning: "踌躇，犹豫",
                 scenario: "看着购物车里高达3万日元的手办，手指放在支付按钮上，田中君感到了强烈的______。",
-                fullSentence: "看着购物车里高达3万日元的手办，手指放在支付按钮上，田中君感到了强烈的<strong>躊躇</strong>。",
+                fullSentence: "看着购物车里高达3万日元的手办，手指放在支付按钮上，田中君感到了强烈的<span class='highlight-blank'>躊躇</span>。",
                 options: ["躊躇", "膨張", "中傷", "重宝"],
                 comment: "买吧！钱并没有消失，只是变成了你喜欢的形状！",
                 emotion: "💸"
@@ -216,7 +553,7 @@
                 word: "誤魔化す", reading: "ごまかす (Gomakasu)", level: "N2",
                 meaning: "敷衍，蒙混过关",
                 scenario: "开会被点名时完全没在听，田中君试图用“我也这么觉得”来______。",
-                fullSentence: "开会被点名时完全没在听，田中君试图用“我也这么觉得”来<strong>誤魔化す</strong>。",
+                fullSentence: "开会被点名时完全没在听，田中君试图用“我也这么觉得”来<span class='highlight-blank'>誤魔化す</span>。",
                 options: ["誤魔化す", "溶かす", "急かす", "冷やかす"],
                 comment: "只要表情够自信，老板就看不出你在摸鱼。",
                 emotion: "🤔"
@@ -225,7 +562,7 @@
                 word: "不甲斐ない", reading: "ふがいない (Fugainai)", level: "N1",
                 meaning: "窝囊，没出息",
                 scenario: "本来想帅气地壁咚，结果脚滑摔了个狗吃屎，真是太______了。",
-                fullSentence: "本来想帅气地壁咚，结果脚滑摔了个狗吃屎，真是太<strong>不甲斐ない</strong>了。",
+                fullSentence: "本来想帅气地壁咚，结果脚滑摔了个狗吃屎，真是太<span class='highlight-blank'>不甲斐ない</span>了。",
                 options: ["不甲斐ない", "危ない", "仕方ない", "他愛ない"],
                 comment: "连地心引力都在针对田中君。",
                 emotion: "🤕"
@@ -234,7 +571,7 @@
                 word: "八つ当たり", reading: "やつあたり (Yatsuatari)", level: "N1",
                 meaning: "乱发脾气，迁怒",
                 scenario: "被上司骂了之后，田中君回家对着无辜的猫咪进行______，结果被猫抓了。",
-                fullSentence: "被上司骂了之后，田中君回家对着无辜的猫咪进行<strong>八つ当たり</strong>，结果被猫抓了。",
+                fullSentence: "被上司骂了之后，田中君回家对着无辜的猫咪进行<span class='highlight-blank'>八つ当たり</span>，结果被猫抓了。",
                 options: ["八つ当たり", "人当たり", "日当たり", "体当たり"],
                 comment: "猫：这就是食物链的顶端（猫 > 田中）。",
                 emotion: "😾"
@@ -243,7 +580,7 @@
                 word: "空気を読む", reading: "くうきをよむ (Kuuki wo yomu)", level: "N3",
                 meaning: "察言观色",
                 scenario: "大家都说“不想去酒会”，只有田中大喊“我想去！”，他完全不会______。",
-                fullSentence: "大家都说“不想去酒会”，只有田中大喊“我想去！”，他完全不会<strong>空気を読む</strong>。",
+                fullSentence: "大家都说“不想去酒会”，只有田中大喊“我想去！”，他完全不会<span class='highlight-blank'>空気を読む</span>。",
                 options: ["空気を読む", "空気を吸う", "空気を入れる", "空気にする"],
                 comment: "这种时候只要保持尴尬而不失礼貌的微笑就好了。",
                 emotion: "😶"
@@ -252,7 +589,7 @@
                 word: "恍惚", reading: "こうこつ (Koukotsu)", level: "N1",
                 meaning: "恍惚，陶醉",
                 scenario: "终于吃到了排队三小时的限量拉面，田中君露出了一脸______的表情。",
-                fullSentence: "终于吃到了排队三小时的限量拉面，田中君露出了一脸<strong>恍惚</strong>的表情。",
+                fullSentence: "终于吃到了排队三小时的限量拉面，田中君露出了一脸<span class='highlight-blank'>恍惚</span>的表情。",
                 options: ["恍惚", "恐縮", "孤独", "昆虫"],
                 comment: "碳水化合物是人类快乐的源泉。",
                 emotion: "🍜"
@@ -261,7 +598,7 @@
                 word: "修羅場", reading: "しゅらば (Shuraba)", level: "N1",
                 meaning: "惨烈的场面/修罗场",
                 scenario: "前女友和现女友在公司楼下相遇了，这简直是地狱般的______！",
-                fullSentence: "前女友和现女友在公司楼下相遇了，这简直是地狱般的<strong>修羅場</strong>！",
+                fullSentence: "前女友和现女友在公司楼下相遇了，这简直是地狱般的<span class='highlight-blank'>修羅場</span>！",
                 options: ["修羅場", "劇場", "牧場", "広場"],
                 comment: "田中君，请安息吧。",
                 emotion: "😱"
@@ -270,7 +607,7 @@
                 word: "現実逃避", reading: "げんじつとうひ (Genjitsu Touhi)", level: "N1",
                 meaning: "逃避现实",
                 scenario: "明明明天就是截止日期，田中君却开始疯狂打扫房间，这完全是______。",
-                fullSentence: "明明明天就是截止日期，田中君却开始疯狂打扫房间，这完全是<strong>現実逃避</strong>。",
+                fullSentence: "明明明天就是截止日期，田中君却开始疯狂打扫房间，这完全是<span class='highlight-blank'>現実逃避</span>。",
                 options: ["現実逃避", "現状維持", "真剣勝負", "興味津々"],
                 comment: "为什么考试前的桌子总是特别脏？这是宇宙的未解之谜。",
                 emotion: "🧹"
@@ -279,7 +616,7 @@
                 word: "理不尽", reading: "りふじん (Ribujin)", level: "N1",
                 meaning: "不讲理，蛮横",
                 scenario: "客户说“虽然是我确认过的方案，但我不喜欢，重做”，这个要求太______了！",
-                fullSentence: "客户说“虽然是我确认过的方案，但我不喜欢，重做”，这个要求太<strong>理不尽</strong>了！",
+                fullSentence: "客户说“虽然是我确认过的方案，但我不喜欢，重做”，这个要求太<span class='highlight-blank'>理不尽</span>了！",
                 options: ["理不尽", "不自然", "不用心", "不器用"],
                 comment: "甲方虐我千百遍，我待甲方如初恋（并不）。",
                 emotion: "💢"
@@ -288,7 +625,7 @@
                 word: "恐縮", reading: "きょうしゅく (Kyoushuku)", level: "N2",
                 meaning: "惶恐，过意不去",
                 scenario: "大家都在加班，田中君却不得不准时下班去看牙医，感到非常______。",
-                fullSentence: "大家都在加班，田中君却不得不准时下班去看牙医，感到非常<strong>恐縮</strong>。",
+                fullSentence: "大家都在加班，田中君却不得不准时下班去看牙医，感到非常<span class='highlight-blank'>恐縮</span>。",
                 options: ["恐縮", "短縮", "濃縮", "結束"],
                 comment: "虽然嘴上说“不好意思先走了”，其实心里乐开了花。",
                 emotion: "🙇"
@@ -297,7 +634,7 @@
                 word: "台無し", reading: "だいなし (Dainashi)", level: "N3",
                 meaning: "糟蹋，白费",
                 scenario: "特意穿了新买的白衬衫，结果吃咖喱乌冬面溅到了汁，一天的心情都______了。",
-                fullSentence: "特意穿了新买的白衬衫，结果吃咖喱乌冬面溅到了汁，一天的心情都<strong>台無し</strong>了。",
+                fullSentence: "特意穿了新买的白衬衫，结果吃咖喱乌冬面溅到了汁，一天的心情都<span class='highlight-blank'>台無し</span>了。",
                 options: ["台無し", "手放し", "文無し", "能無し"],
                 comment: "白衬衫对咖喱有一种神秘的万有引力。",
                 emotion: "🍛"
@@ -306,7 +643,7 @@
                 word: "愚痴", reading: "ぐち (Guchi)", level: "N2",
                 meaning: "牢骚，抱怨",
                 scenario: "在居酒屋里，田中君喝了一口啤酒，开始对同事发泄关于老板的______。",
-                fullSentence: "在居酒屋里，田中君喝了一口啤酒，开始对同事发泄关于老板的<strong>愚痴</strong>。",
+                fullSentence: "在居酒屋里，田中君喝了一口啤酒，开始对同事发泄关于老板的<span class='highlight-blank'>愚痴</span>。",
                 options: ["愚痴", "音痴", "無知", "機智"],
                 comment: "这就是所谓的“酒精消毒”，消毒心灵的创伤。",
                 emotion: "🍺"
@@ -315,7 +652,7 @@
                 word: "余計", reading: "よけい (Yokei)", level: "N3",
                 meaning: "多余的，无谓的",
                 scenario: "本来不想加班的，结果热心的同事帮忙指出了更多Bug，真是做了______的事！",
-                fullSentence: "本来不想加班的，结果热心的同事帮忙指出了更多Bug，真是做了<strong>余計</strong>的事！",
+                fullSentence: "本来不想加班的，结果热心的同事帮忙指出了更多Bug，真是做了<span class='highlight-blank'>余計</span>的事！",
                 options: ["余計", "会計", "生計", "時計"],
                 comment: "有时候，“什么都不做”就是最大的帮忙。",
                 emotion: "😫"
@@ -324,7 +661,7 @@
                 word: "殺風景", reading: "さっぷうけい (Sappuukei)", level: "N1",
                 meaning: "大煞风景，单调乏味",
                 scenario: "打开田中君的假期日历，发现里面一片空白，真是太______了。",
-                fullSentence: "打开田中君的假期日历，发现里面一片空白，真是太<strong>殺風景</strong>了。",
+                fullSentence: "打开田中君的假期日历，发现里面一片空白，真是太<span class='highlight-blank'>殺風景</span>了。",
                 options: ["殺風景", "百面相", "致命傷", "無愛想"],
                 comment: "这就是极简主义生活（并不是，只是没朋友）。",
                 emotion: "📅"
@@ -333,7 +670,7 @@
                 word: "お世辞", reading: "おせじ (Oseji)", level: "N3",
                 meaning: "奉承话",
                 scenario: "为了能在公司生存下去，即使老板的领带很丑，也要说“真时尚啊”这种______。",
-                fullSentence: "为了能在公司生存下去，即使老板的领带很丑，也要说“真时尚啊”这种<strong>お世辞</strong>。",
+                fullSentence: "为了能在公司生存下去，即使老板的领带很丑，也要说“真时尚啊”这种<span class='highlight-blank'>お世辞</span>。",
                 options: ["お世辞", "家事", "火事", "大事"],
                 comment: "这不是谎言，这是职场润滑油。",
                 emotion: "👔"
@@ -342,7 +679,7 @@
                 word: "支離滅裂", reading: "しりめつれつ (Shirimetsuretsu)", level: "N1",
                 meaning: "语无伦次",
                 scenario: "通宵工作后，田中君的晨会发言前言不搭后语，完全是______。",
-                fullSentence: "通宵工作后，田中君的晨会发言前言不搭后语，完全是<strong>支離滅裂</strong>。",
+                fullSentence: "通宵工作后，田中君的晨会发言前言不搭后语，完全是<span class='highlight-blank'>支離滅裂</span>。",
                 options: ["支離滅裂", "誠心誠意", "五里霧中", "四面楚歌"],
                 comment: "大脑已离线，现在说话的是脊髓反射。",
                 emotion: "😵"
@@ -351,7 +688,7 @@
                 word: "自業自得", reading: "じごうじとく (Jigoujitoku)", level: "N1",
                 meaning: "自作自受",
                 scenario: "昨晚明明知道今天要早起却还是熬夜打游戏，现在的困意完全是______。",
-                fullSentence: "昨晚明明知道今天要早起却还是熬夜打游戏，现在的困意完全是<strong>自業自得</strong>。",
+                fullSentence: "昨晚明明知道今天要早起却还是熬夜打游戏，现在的困意完全是<span class='highlight-blank'>自業自得</span>。",
                 options: ["自業自得", "一石二鳥", "自画自賛", "半信半疑"],
                 comment: "未来的我一定会原谅现在的我的！...并没有。",
                 emotion: "🎮"
@@ -427,7 +764,7 @@
             ui.status.innerText = `Q${currentQuestionIndex + 1}: ${q.level}`;
             
             const blank = "______";
-            ui.question.innerHTML = q.scenario.replace(blank, `<span class="border-b-2 border-indigo-400 text-indigo-500 font-bold px-1 inline-block">????</span>`);
+            ui.question.innerHTML = q.scenario.replace(blank, `<span class='highlight-blank'>????</span>`);
 
             ui.optionsGrid.innerHTML = "";
             let currentOptions = [...q.options];
@@ -435,8 +772,8 @@
 
             currentOptions.forEach(opt => {
                 const btn = document.createElement('button');
-                btn.className = "option-card w-full bg-white border-2 border-indigo-100 p-4 rounded-2xl text-lg font-bold text-gray-700 shadow-sm transition duration-150 relative overflow-hidden active:bg-indigo-50 cursor-pointer";
-                btn.innerHTML = `<span class="relative z-10">${opt}</span>`;
+                btn.className = "option-btn";
+                btn.innerHTML = `<span>${opt}</span>`;
                 btn.onclick = () => checkAnswer(opt, q);
                 ui.optionsGrid.appendChild(btn);
             });
@@ -468,7 +805,7 @@
             gameActive = false;
             ui.feedback.icon.innerText = isCorrect ? "🎉" : "🥀";
             ui.feedback.title.innerText = isCorrect ? "正解！" : "残念！";
-            ui.feedback.title.className = isCorrect ? "text-2xl font-bold mb-2 text-green-500 font-cute" : "text-2xl font-bold mb-2 text-red-500 font-cute";
+            ui.feedback.title.className = isCorrect ? "modal-title correct" : "modal-title wrong";
             
             ui.feedback.word.innerText = data.word;
             ui.feedback.reading.innerText = data.reading;
