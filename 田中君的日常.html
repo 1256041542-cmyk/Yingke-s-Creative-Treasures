@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="田中君的崩溃日常 - 搞笑日语词汇挑战">
+    
+    <!-- PWA / Mobile Web App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#f0f9ff">
+    <title>田中君的崩溃日常</title>
+
+    <!-- App Icon (Embedded SVG) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>😐</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22 style=%22background-color: %23fef3c7;%22><rect width=%22100%22 height=%22100%22 fill=%22%23fef3c7%22/><text x=%2250%22 y=%2250%22 font-size=%2270%22 text-anchor=%22middle%22 dy=%22.35em%22>😐</text></svg>">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=ZCOOL+KuaiLe&display=swap');
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #f0f9ff;
+            /* 禁止页面滚动和橡皮筋效果，营造 App 质感 */
+            overscroll-behavior: none;
+            touch-action: manipulation;
+            /* 禁止长按选中文字 */
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .font-cute {
+            font-family: 'ZCOOL KuaiLe', cursive;
+        }
+
+        /* 摇晃动画 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+        .shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        /* 弹跳动画 */
+        @keyframes bounce-in {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .pop-in {
+            animation: bounce-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .emoji-avatar {
+            transition: all 0.3s ease;
+        }
+
+        .progress-fill {
+            transition: width 0.5s ease-out;
+        }
+
+        .option-card:active {
+            transform: scale(0.96) !important;
+            background-color: #e0e7ff;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-blue-50 to-indigo-100 h-screen w-screen overflow-hidden flex flex-col items-center justify-center p-4">
+
+    <!-- Game Container -->
+    <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden relative border-4 border-indigo-200 flex flex-col h-full max-h-[90%]">
+        
+        <!-- Header -->
+        <div class="bg-indigo-500 p-4 flex justify-between items-center text-white shrink-0 z-10">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl">🏆</span>
+                <span id="scoreDisplay" class="font-bold text-xl">0</span>
+            </div>
+            <div class="flex-1 mx-4 bg-indigo-700 rounded-full h-3">
+                <div id="progressBar" class="bg-yellow-400 h-3 rounded-full progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="font-bold text-sm">Lv.<span id="levelDisplay">N3</span></div>
+        </div>
+
+        <!-- Scrollable Content Area -->
+        <div class="p-6 relative flex-1 overflow-y-auto">
+            
+            <!-- Tanaka Avatar -->
+            <div class="flex justify-center mb-4">
+                <div class="relative">
+                    <div class="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center text-5xl shadow-inner border-2 border-yellow-200 emoji-avatar" id="tanakaFace">
+                        😐
+                    </div>
+                    <div class="absolute -top-2 -right-12 bg-white px-3 py-1 rounded-xl shadow-md border border-gray-100 text-xs text-gray-500 animate-pulse" id="statusText">
+                        正在发呆...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Scenario -->
+            <div class="mb-4 text-center">
+                <p class="text-gray-400 text-xs mb-1 font-cute tracking-widest">SCENARIO / 场景</p>
+                <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 min-h-[90px] flex items-center justify-center">
+                    <p id="questionText" class="text-base text-gray-800 leading-relaxed font-medium">
+                        加载中...
+                    </p>
+                </div>
+            </div>
+
+            <!-- Options Grid -->
+            <div id="optionsGrid" class="grid grid-cols-1 gap-3 pb-4">
+                <!-- Options injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Share/Install Hint (Bottom) -->
+    <div class="mt-4 text-indigo-400 text-xs text-center opacity-70">
+        <p>💡 Tip: 如无法点击，请尝试复制代码到 CodePen.io 运行</p>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="feedbackPanel" class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/20 backdrop-blur-sm">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl transform transition-all scale-100 flex flex-col items-center text-center border-4 border-white">
+            <div id="feedbackIcon" class="text-6xl mb-4">🎉</div>
+            <h2 id="feedbackTitle" class="text-2xl font-bold mb-2 text-indigo-600">正解！</h2>
+            
+            <div class="bg-indigo-50 p-4 rounded-xl w-full mb-4 text-left shadow-inner">
+                <div class="flex justify-between items-baseline mb-1">
+                    <p id="resultWord" class="text-2xl font-bold text-indigo-700">単語</p>
+                    <p id="resultReading" class="text-sm text-indigo-400 font-mono">たんご</p>
+                </div>
+                <p class="text-xs text-gray-400 uppercase border-t border-indigo-200 pt-1 mt-1">Meaning</p>
+                <p id="resultMeaning" class="text-gray-700 font-medium">含义</p>
+            </div>
+
+            <p id="funnyComment" class="text-sm text-gray-500 italic mb-6">"田中君觉得很赞。"</p>
+
+            <button onclick="nextQuestion()" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg active:scale-95 transition-transform cursor-pointer">
+                下一题 (Tsugi!)
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="gameOverPanel" class="hidden fixed inset-0 z-50 bg-indigo-900 flex flex-col items-center justify-center p-8 text-center text-white">
+        <div class="text-6xl mb-4 animate-bounce">🍱</div>
+        <h2 class="text-3xl font-bold mb-2 font-cute">下班啦！</h2>
+        <p class="mb-6 text-indigo-200">今天的日语修炼成果...</p>
+        <div class="text-6xl font-bold text-yellow-400 mb-2" id="finalScore">0</div>
+        <p class="text-lg text-indigo-300 mb-8 font-cute" id="finalRank">菜鸟社畜</p>
+        
+        <div class="flex flex-col w-full max-w-xs gap-3">
+            <button onclick="shareScore()" id="shareBtn" class="bg-white text-indigo-600 font-bold py-3 px-8 rounded-full shadow-lg hover:bg-gray-100 transition w-full hidden cursor-pointer">
+                炫耀一下 (Share)
+            </button>
+            <button onclick="restartGame()" class="bg-yellow-400 text-indigo-900 font-bold py-3 px-8 rounded-full shadow-lg hover:bg-yellow-300 transition w-full cursor-pointer">
+                再来一天 (Retry)
+            </button>
+        </div>
+    </div>
+
+    <!-- Confetti Canvas -->
+    <canvas id="confetti" class="fixed top-0 left-0 w-full h-full pointer-events-none z-50 hidden"></canvas>
+
+    <script>
+        // --- 游戏数据 (20个词汇) ---
+        const vocabularyData = [
+            {
+                word: "我慢", reading: "がまん (Gaman)", level: "N3",
+                meaning: "忍耐，忍受",
+                scenario: "电梯里只有我和老板两个人，突然感觉到一阵强烈的腹痛，但我必须______。",
+                fullSentence: "电梯里只有我和老板两个人，突然感觉到一阵强烈的腹痛，但我必须<strong>我慢</strong>。",
+                options: ["我慢", "自慢", "怠慢", "肥満"],
+                comment: "这就是社畜的究极奥义！屁如果不忍住，人生就结束了。",
+                emotion: "😖"
+            },
+            {
+                word: "矛盾", reading: "むじゅん (Mujun)", level: "N2",
+                meaning: "矛盾",
+                scenario: "一边说着“我要减肥”，一边往嘴里塞第三块蛋糕，这种行为充满了______。",
+                fullSentence: "一边说着“我要减肥”，一边往嘴里塞第三块蛋糕，这种行为充满了<strong>矛盾</strong>。",
+                options: ["矛盾", "切断", "油断", "決断"],
+                comment: "没错，甜食是装在另一个胃里的，这不算矛盾（确信）。",
+                emotion: "🍰"
+            },
+            {
+                word: "配慮", reading: "はいりょ (Hairyo)", level: "N2",
+                meaning: "关怀，照顾",
+                scenario: "看到秃头的课长走过来，田中君默默地把屏幕上的假发广告关掉，这是一种______。",
+                fullSentence: "看到秃头的课长走过来，田中君默默地把屏幕上的假发广告关掉，这是一种<strong>配慮</strong>。",
+                options: ["配慮", "遠慮", "焦虑", "無礼"],
+                comment: "这是为了守护课长最后的尊严，真是温柔的世界啊。",
+                emotion: "🤫"
+            },
+            {
+                word: "躊躇", reading: "ちゅうちょ (Chuucho)", level: "N1",
+                meaning: "踌躇，犹豫",
+                scenario: "看着购物车里高达3万日元的手办，手指放在支付按钮上，田中君感到了强烈的______。",
+                fullSentence: "看着购物车里高达3万日元的手办，手指放在支付按钮上，田中君感到了强烈的<strong>躊躇</strong>。",
+                options: ["躊躇", "膨張", "中傷", "重宝"],
+                comment: "买吧！钱并没有消失，只是变成了你喜欢的形状！",
+                emotion: "💸"
+            },
+            {
+                word: "誤魔化す", reading: "ごまかす (Gomakasu)", level: "N2",
+                meaning: "敷衍，蒙混过关",
+                scenario: "开会被点名时完全没在听，田中君试图用“我也这么觉得”来______。",
+                fullSentence: "开会被点名时完全没在听，田中君试图用“我也这么觉得”来<strong>誤魔化す</strong>。",
+                options: ["誤魔化す", "溶かす", "急かす", "冷やかす"],
+                comment: "只要表情够自信，老板就看不出你在摸鱼。",
+                emotion: "🤔"
+            },
+            {
+                word: "不甲斐ない", reading: "ふがいない (Fugainai)", level: "N1",
+                meaning: "窝囊，没出息",
+                scenario: "本来想帅气地壁咚，结果脚滑摔了个狗吃屎，真是太______了。",
+                fullSentence: "本来想帅气地壁咚，结果脚滑摔了个狗吃屎，真是太<strong>不甲斐ない</strong>了。",
+                options: ["不甲斐ない", "危ない", "仕方ない", "他愛ない"],
+                comment: "连地心引力都在针对田中君。",
+                emotion: "🤕"
+            },
+            {
+                word: "八つ当たり", reading: "やつあたり (Yatsuatari)", level: "N1",
+                meaning: "乱发脾气，迁怒",
+                scenario: "被上司骂了之后，田中君回家对着无辜的猫咪进行______，结果被猫抓了。",
+                fullSentence: "被上司骂了之后，田中君回家对着无辜的猫咪进行<strong>八つ当たり</strong>，结果被猫抓了。",
+                options: ["八つ当たり", "人当たり", "日当たり", "体当たり"],
+                comment: "猫：这就是食物链的顶端（猫 > 田中）。",
+                emotion: "😾"
+            },
+            {
+                word: "空気を読む", reading: "くうきをよむ (Kuuki wo yomu)", level: "N3",
+                meaning: "察言观色",
+                scenario: "大家都说“不想去酒会”，只有田中大喊“我想去！”，他完全不会______。",
+                fullSentence: "大家都说“不想去酒会”，只有田中大喊“我想去！”，他完全不会<strong>空気を読む</strong>。",
+                options: ["空気を読む", "空気を吸う", "空気を入れる", "空気にする"],
+                comment: "这种时候只要保持尴尬而不失礼貌的微笑就好了。",
+                emotion: "😶"
+            },
+            {
+                word: "恍惚", reading: "こうこつ (Koukotsu)", level: "N1",
+                meaning: "恍惚，陶醉",
+                scenario: "终于吃到了排队三小时的限量拉面，田中君露出了一脸______的表情。",
+                fullSentence: "终于吃到了排队三小时的限量拉面，田中君露出了一脸<strong>恍惚</strong>的表情。",
+                options: ["恍惚", "恐縮", "孤独", "昆虫"],
+                comment: "碳水化合物是人类快乐的源泉。",
+                emotion: "🍜"
+            },
+            {
+                word: "修羅場", reading: "しゅらば (Shuraba)", level: "N1",
+                meaning: "惨烈的场面/修罗场",
+                scenario: "前女友和现女友在公司楼下相遇了，这简直是地狱般的______！",
+                fullSentence: "前女友和现女友在公司楼下相遇了，这简直是地狱般的<strong>修羅場</strong>！",
+                options: ["修羅場", "劇場", "牧場", "広場"],
+                comment: "田中君，请安息吧。",
+                emotion: "😱"
+            },
+            {
+                word: "現実逃避", reading: "げんじつとうひ (Genjitsu Touhi)", level: "N1",
+                meaning: "逃避现实",
+                scenario: "明明明天就是截止日期，田中君却开始疯狂打扫房间，这完全是______。",
+                fullSentence: "明明明天就是截止日期，田中君却开始疯狂打扫房间，这完全是<strong>現実逃避</strong>。",
+                options: ["現実逃避", "現状維持", "真剣勝負", "興味津々"],
+                comment: "为什么考试前的桌子总是特别脏？这是宇宙的未解之谜。",
+                emotion: "🧹"
+            },
+            {
+                word: "理不尽", reading: "りふじん (Ribujin)", level: "N1",
+                meaning: "不讲理，蛮横",
+                scenario: "客户说“虽然是我确认过的方案，但我不喜欢，重做”，这个要求太______了！",
+                fullSentence: "客户说“虽然是我确认过的方案，但我不喜欢，重做”，这个要求太<strong>理不尽</strong>了！",
+                options: ["理不尽", "不自然", "不用心", "不器用"],
+                comment: "甲方虐我千百遍，我待甲方如初恋（并不）。",
+                emotion: "💢"
+            },
+            {
+                word: "恐縮", reading: "きょうしゅく (Kyoushuku)", level: "N2",
+                meaning: "惶恐，过意不去",
+                scenario: "大家都在加班，田中君却不得不准时下班去看牙医，感到非常______。",
+                fullSentence: "大家都在加班，田中君却不得不准时下班去看牙医，感到非常<strong>恐縮</strong>。",
+                options: ["恐縮", "短縮", "濃縮", "結束"],
+                comment: "虽然嘴上说“不好意思先走了”，其实心里乐开了花。",
+                emotion: "🙇"
+            },
+            {
+                word: "台無し", reading: "だいなし (Dainashi)", level: "N3",
+                meaning: "糟蹋，白费",
+                scenario: "特意穿了新买的白衬衫，结果吃咖喱乌冬面溅到了汁，一天的心情都______了。",
+                fullSentence: "特意穿了新买的白衬衫，结果吃咖喱乌冬面溅到了汁，一天的心情都<strong>台無し</strong>了。",
+                options: ["台無し", "手放し", "文無し", "能無し"],
+                comment: "白衬衫对咖喱有一种神秘的万有引力。",
+                emotion: "🍛"
+            },
+            {
+                word: "愚痴", reading: "ぐち (Guchi)", level: "N2",
+                meaning: "牢骚，抱怨",
+                scenario: "在居酒屋里，田中君喝了一口啤酒，开始对同事发泄关于老板的______。",
+                fullSentence: "在居酒屋里，田中君喝了一口啤酒，开始对同事发泄关于老板的<strong>愚痴</strong>。",
+                options: ["愚痴", "音痴", "無知", "機智"],
+                comment: "这就是所谓的“酒精消毒”，消毒心灵的创伤。",
+                emotion: "🍺"
+            },
+            {
+                word: "余計", reading: "よけい (Yokei)", level: "N3",
+                meaning: "多余的，无谓的",
+                scenario: "本来不想加班的，结果热心的同事帮忙指出了更多Bug，真是做了______的事！",
+                fullSentence: "本来不想加班的，结果热心的同事帮忙指出了更多Bug，真是做了<strong>余計</strong>的事！",
+                options: ["余計", "会計", "生計", "時計"],
+                comment: "有时候，“什么都不做”就是最大的帮忙。",
+                emotion: "😫"
+            },
+            {
+                word: "殺風景", reading: "さっぷうけい (Sappuukei)", level: "N1",
+                meaning: "大煞风景，单调乏味",
+                scenario: "打开田中君的假期日历，发现里面一片空白，真是太______了。",
+                fullSentence: "打开田中君的假期日历，发现里面一片空白，真是太<strong>殺風景</strong>了。",
+                options: ["殺風景", "百面相", "致命傷", "無愛想"],
+                comment: "这就是极简主义生活（并不是，只是没朋友）。",
+                emotion: "📅"
+            },
+            {
+                word: "お世辞", reading: "おせじ (Oseji)", level: "N3",
+                meaning: "奉承话",
+                scenario: "为了能在公司生存下去，即使老板的领带很丑，也要说“真时尚啊”这种______。",
+                fullSentence: "为了能在公司生存下去，即使老板的领带很丑，也要说“真时尚啊”这种<strong>お世辞</strong>。",
+                options: ["お世辞", "家事", "火事", "大事"],
+                comment: "这不是谎言，这是职场润滑油。",
+                emotion: "👔"
+            },
+            {
+                word: "支離滅裂", reading: "しりめつれつ (Shirimetsuretsu)", level: "N1",
+                meaning: "语无伦次",
+                scenario: "通宵工作后，田中君的晨会发言前言不搭后语，完全是______。",
+                fullSentence: "通宵工作后，田中君的晨会发言前言不搭后语，完全是<strong>支離滅裂</strong>。",
+                options: ["支離滅裂", "誠心誠意", "五里霧中", "四面楚歌"],
+                comment: "大脑已离线，现在说话的是脊髓反射。",
+                emotion: "😵"
+            },
+            {
+                word: "自業自得", reading: "じごうじとく (Jigoujitoku)", level: "N1",
+                meaning: "自作自受",
+                scenario: "昨晚明明知道今天要早起却还是熬夜打游戏，现在的困意完全是______。",
+                fullSentence: "昨晚明明知道今天要早起却还是熬夜打游戏，现在的困意完全是<strong>自業自得</strong>。",
+                options: ["自業自得", "一石二鳥", "自画自賛", "半信半疑"],
+                comment: "未来的我一定会原谅现在的我的！...并没有。",
+                emotion: "🎮"
+            }
+        ];
+
+        // --- 游戏状态变量 ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let gameActive = false;
+        let shuffledQuestions = [];
+
+        // --- DOM 元素 ---
+        const ui = {
+            score: document.getElementById('scoreDisplay'),
+            level: document.getElementById('levelDisplay'),
+            progressBar: document.getElementById('progressBar'),
+            face: document.getElementById('tanakaFace'),
+            status: document.getElementById('statusText'),
+            question: document.getElementById('questionText'),
+            optionsGrid: document.getElementById('optionsGrid'),
+            feedback: {
+                panel: document.getElementById('feedbackPanel'),
+                icon: document.getElementById('feedbackIcon'),
+                title: document.getElementById('feedbackTitle'),
+                word: document.getElementById('resultWord'),
+                reading: document.getElementById('resultReading'),
+                meaning: document.getElementById('resultMeaning'),
+                comment: document.getElementById('funnyComment')
+            },
+            gameOver: {
+                panel: document.getElementById('gameOverPanel'),
+                finalScore: document.getElementById('finalScore'),
+                rank: document.getElementById('finalRank'),
+                shareBtn: document.getElementById('shareBtn')
+            }
+        };
+
+        function initGame() {
+            shuffledQuestions = [...vocabularyData].sort(() => 0.5 - Math.random());
+            currentQuestionIndex = 0;
+            score = 0;
+            gameActive = true;
+            updateScoreUI();
+            
+            ui.gameOver.panel.classList.add('hidden');
+            ui.feedback.panel.classList.add('hidden');
+            
+            // 检查分享功能
+            if (navigator.share) {
+                ui.gameOver.shareBtn.classList.remove('hidden');
+            }
+            
+            loadQuestion();
+        }
+
+        function updateScoreUI() {
+            ui.score.innerText = score;
+            const progress = ((currentQuestionIndex) / shuffledQuestions.length) * 100;
+            ui.progressBar.style.width = `${progress}%`;
+        }
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= shuffledQuestions.length) {
+                endGame();
+                return;
+            }
+
+            const q = shuffledQuestions[currentQuestionIndex];
+            
+            ui.level.innerText = q.level;
+            ui.face.innerText = q.emotion;
+            ui.status.innerText = `Q${currentQuestionIndex + 1}: ${q.level}`;
+            
+            const blank = "______";
+            ui.question.innerHTML = q.scenario.replace(blank, `<span class="border-b-2 border-indigo-400 text-indigo-500 font-bold px-1 inline-block">????</span>`);
+
+            ui.optionsGrid.innerHTML = "";
+            let currentOptions = [...q.options];
+            currentOptions.sort(() => 0.5 - Math.random());
+
+            currentOptions.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "option-card w-full bg-white border-2 border-indigo-100 p-4 rounded-2xl text-lg font-bold text-gray-700 shadow-sm transition duration-150 relative overflow-hidden active:bg-indigo-50 cursor-pointer";
+                btn.innerHTML = `<span class="relative z-10">${opt}</span>`;
+                btn.onclick = () => checkAnswer(opt, q);
+                ui.optionsGrid.appendChild(btn);
+            });
+        }
+
+        function checkAnswer(selectedOption, questionData) {
+            if (!gameActive) return;
+
+            const isCorrect = selectedOption === questionData.word;
+            
+            if (isCorrect) {
+                score += 100;
+                ui.face.innerText = "😎";
+                ui.status.innerText = "超神！";
+                showConfetti();
+                showFeedback(true, questionData);
+            } else {
+                ui.face.innerText = "😭";
+                ui.face.classList.add('shake');
+                ui.status.innerText = "搞砸了...";
+                navigator.vibrate && navigator.vibrate(200); // 手机震动反馈
+                setTimeout(() => ui.face.classList.remove('shake'), 500);
+                showFeedback(false, questionData);
+            }
+            updateScoreUI();
+        }
+
+        function showFeedback(isCorrect, data) {
+            gameActive = false;
+            ui.feedback.icon.innerText = isCorrect ? "🎉" : "🥀";
+            ui.feedback.title.innerText = isCorrect ? "正解！" : "残念！";
+            ui.feedback.title.className = isCorrect ? "text-2xl font-bold mb-2 text-green-500 font-cute" : "text-2xl font-bold mb-2 text-red-500 font-cute";
+            
+            ui.feedback.word.innerText = data.word;
+            ui.feedback.reading.innerText = data.reading;
+            ui.feedback.meaning.innerText = data.meaning;
+            ui.feedback.comment.innerText = `"${data.comment}"`;
+            ui.question.innerHTML = data.fullSentence;
+
+            ui.feedback.panel.classList.remove('hidden');
+            ui.feedback.panel.classList.add('pop-in');
+        }
+
+        function nextQuestion() {
+            ui.feedback.panel.classList.add('hidden');
+            ui.feedback.panel.classList.remove('pop-in');
+            currentQuestionIndex++;
+            gameActive = true;
+            loadQuestion();
+        }
+
+        function endGame() {
+            ui.progressBar.style.width = "100%";
+            ui.gameOver.finalScore.innerText = score;
+            
+            let rankText = "";
+            if (score === shuffledQuestions.length * 100) rankText = "日语的神！(N0级别)";
+            else if (score >= shuffledQuestions.length * 80) rankText = "精英社畜 (N1合格)";
+            else if (score >= shuffledQuestions.length * 50) rankText = "普通路人 (N3水平)";
+            else rankText = "baka确信 (加油!)";
+            
+            ui.gameOver.rank.innerText = rankText;
+            ui.gameOver.panel.classList.remove('hidden');
+            ui.gameOver.panel.classList.add('pop-in');
+            showConfetti();
+        }
+
+        function restartGame() {
+            initGame();
+        }
+
+        function shareScore() {
+            const text = `我在《田中君的崩溃日常》中获得了 ${score} 分！称号：${ui.gameOver.rank.innerText}。你也来试试？`;
+            if (navigator.share) {
+                navigator.share({
+                    title: '田中君的崩溃日常',
+                    text: text,
+                    url: window.location.href
+                }).catch(console.error);
+            } else {
+                alert("复制成功：\n" + text);
+            }
+        }
+
+        function showConfetti() {
+            const canvas = document.getElementById('confetti');
+            canvas.classList.remove('hidden');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            for(let i=0; i<60; i++) {
+                particles.push({
+                    x: canvas.width/2,
+                    y: canvas.height/2,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: (Math.random() - 0.5) * 15 - 5,
+                    color: `hsl(${Math.random()*360}, 100%, 50%)`,
+                    size: Math.random() * 6 + 2,
+                    life: 100
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let activeParticles = 0;
+                particles.forEach(p => {
+                    if(p.life > 0) {
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        p.vy += 0.3;
+                        p.size *= 0.95;
+                        p.life--;
+                        
+                        ctx.fillStyle = p.color;
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                        ctx.fill();
+                        activeParticles++;
+                    }
+                });
+
+                if (activeParticles > 0) {
+                    requestAnimationFrame(animate);
+                } else {
+                    canvas.classList.add('hidden');
+                }
+            }
+            animate();
+        }
+
+        initGame();
+    </script>
+</body>
+</html>
